@@ -107,7 +107,7 @@ final class ASWJ_LMS {
 		if ( ! $post ) {
 			return false;
 		}
-		foreach ( array( 'aswj_courses', 'aswj_portal', 'aswj_login_status' ) as $tag ) {
+		foreach ( array( 'aswj_courses', 'aswj_portal' ) as $tag ) {
 			if ( has_shortcode( $post->post_content, $tag ) ) {
 				return true;
 			}

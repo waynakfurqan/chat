@@ -179,6 +179,9 @@
 .aswj-course-hero .aswj-course-meta { color: rgba(255, 255, 255, 0.8); }
 .aswj-course-hero .aswj-badge { background: rgba(255, 255, 255, 0.18); }
 .aswj-course-hero .aswj-small { color: rgba(255, 255, 255, 0.85); }
+.aswj-btn-hero { background: #fff; border-color: #fff; color: var(--aswj-blue-dark) !important; }
+.aswj-btn-hero:hover { background: rgba(255, 255, 255, 0.88); border-color: rgba(255, 255, 255, 0.88); }
+.aswj-course-finished { font-weight: 700; color: #ffe9a8; }
 .aswj-breadcrumb a { color: inherit; opacity: 0.85; text-decoration: none; font-size: 0.9rem; }
 
 /* Course / lesson layouts ------------------------------------------------ */

@@ -57,6 +57,27 @@ while ( have_posts() ) :
 						?>
 					</p>
 				<?php endif; ?>
+				<?php if ( $check['allowed'] && $lessons ) : ?>
+					<?php
+					// Jump to the first lesson the student has not finished yet.
+					$resume = $lessons[0];
+					foreach ( $lessons as $l ) {
+						if ( ! in_array( $l->ID, $done_ids, true ) ) {
+							$resume = $l;
+							break;
+						}
+					}
+					$is_finished = $progress && $progress['total'] > 0 && $progress['completed'] >= $progress['total'];
+					?>
+					<?php if ( $is_finished ) : ?>
+						<p class="aswj-course-finished">&#127882; <?php esc_html_e( 'Ma shaa Allah — you have completed this course!', 'aswj-lms' ); ?></p>
+						<p><a class="aswj-btn aswj-btn-hero" href="<?php echo esc_url( get_permalink( $lessons[0] ) ); ?>"><?php esc_html_e( 'Review Lessons', 'aswj-lms' ); ?></a></p>
+					<?php else : ?>
+						<p><a class="aswj-btn aswj-btn-hero" href="<?php echo esc_url( get_permalink( $resume ) ); ?>">
+							<?php echo ( $progress && $progress['completed'] > 0 ) ? esc_html__( 'Continue Learning', 'aswj-lms' ) : esc_html__( 'Start Course', 'aswj-lms' ); ?>
+						</a></p>
+					<?php endif; ?>
+				<?php endif; ?>
 			</div>
 		</header>
 
