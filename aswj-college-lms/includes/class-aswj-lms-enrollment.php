@@ -20,10 +20,11 @@ class ASWJ_LMS_Enrollment {
 	/**
 	 * Enroll a user in a course (idempotent — re-enrolling reactivates).
 	 *
-	 * @param string      $source  manual|free|payment|subscription
+	 * @param string      $source  manual|free|payment|subscription|sponsored|offline
 	 * @param string|null $expires MySQL datetime or null for no expiry.
+	 * @param string      $status  active|pending
 	 */
-	public static function enroll( $user_id, $course_id, $source = 'manual', $expires = null ) {
+	public static function enroll( $user_id, $course_id, $source = 'manual', $expires = null, $status = 'active' ) {
 		global $wpdb;
 		$user_id   = (int) $user_id;
 		$course_id = (int) $course_id;
@@ -36,7 +37,7 @@ class ASWJ_LMS_Enrollment {
 			$wpdb->update(
 				self::table(),
 				array(
-					'status'     => 'active',
+					'status'     => $status,
 					'source'     => $source,
 					'expires_at' => $expires,
 				),
@@ -50,7 +51,7 @@ class ASWJ_LMS_Enrollment {
 				array(
 					'user_id'     => $user_id,
 					'course_id'   => $course_id,
-					'status'      => 'active',
+					'status'      => $status,
 					'source'      => $source,
 					'enrolled_at' => current_time( 'mysql' ),
 					'expires_at'  => $expires,
@@ -59,8 +60,43 @@ class ASWJ_LMS_Enrollment {
 			);
 		}
 
-		do_action( 'aswj_lms_enrolled', $user_id, $course_id, $source );
+		do_action( 'aswj_lms_enrolled', $user_id, $course_id, $source, $status );
 		return true;
+	}
+
+	/**
+	 * Record a registration that still needs payment verification
+	 * (e.g. bank transfer / cash in person). Never downgrades an
+	 * already-active enrollment.
+	 */
+	public static function add_pending( $user_id, $course_id, $source = 'offline' ) {
+		$existing = self::get_enrollment( $user_id, $course_id );
+		if ( $existing && 'active' === $existing->status ) {
+			return false;
+		}
+		return self::enroll( $user_id, $course_id, $source, null, 'pending' );
+	}
+
+	public static function is_pending( $user_id, $course_id ) {
+		$row = self::get_enrollment( $user_id, $course_id );
+		return $row && 'pending' === $row->status;
+	}
+
+	/**
+	 * Pending course IDs for a user (awaiting payment verification).
+	 *
+	 * @return int[]
+	 */
+	public static function get_user_pending_course_ids( $user_id ) {
+		global $wpdb;
+		$table = self::table();
+		$ids   = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT course_id FROM {$table} WHERE user_id = %d AND status = 'pending'",
+				(int) $user_id
+			)
+		);
+		return array_map( 'intval', $ids );
 	}
 
 	public static function unenroll( $user_id, $course_id ) {

@@ -43,6 +43,13 @@ class ASWJ_LMS_FluentForms {
 
 		// When Fluent Forms Pro creates the user account.
 		add_action( 'fluentform/user_registration_completed', array( __CLASS__, 'on_user_registered' ), 20, 4 );
+
+		// Autofill known fields (name, email, phone, gender, age) for
+		// logged-in students so returning students only fill in what's new.
+		foreach ( array( 'input_name', 'input_email', 'input_text', 'input_number', 'phone', 'select', 'input_radio' ) as $element ) {
+			add_filter( 'fluentform/rendering_field_data_' . $element, array( __CLASS__, 'autofill_field' ), 10, 2 );
+			add_filter( 'fluentform_rendering_field_data_' . $element, array( __CLASS__, 'autofill_field' ), 10, 2 ); // pre-5.0
+		}
 	}
 
 	/* ---------------------------------------------------------------------
@@ -60,31 +67,100 @@ class ASWJ_LMS_FluentForms {
 			$user->add_role( 'aswj_student' );
 		}
 
-		self::maybe_flag_sister_from_entry( $user_id, $entry );
+		self::sync_profile_from_entry( $user_id, $entry );
 	}
 
 	public static function on_submission( $entry_id, $form_data, $form ) {
 		$form_id = is_object( $form ) && isset( $form->id ) ? (int) $form->id : 0;
-		if ( ! $form_id || $form_id !== (int) ASWJ_LMS_Settings::get( 'registration_form_id' ) ) {
+		if ( ! $form_id ) {
 			return;
 		}
 
-		// The user may have been created by the registration feed within
-		// this request; try to resolve them by the submitted email.
+		$user = self::resolve_submitting_user( $form_data );
+
+		// Account registration form: ensure role + profile sync.
+		if ( $form_id === (int) ASWJ_LMS_Settings::get( 'registration_form_id' ) && $user ) {
+			if ( ! user_can( $user, 'manage_options' ) && ! in_array( 'aswj_student', (array) $user->roles, true ) ) {
+				$user->add_role( 'aswj_student' );
+			}
+			self::sync_profile_from_entry( $user->ID, $form_data );
+		}
+
+		// Course registration/payment form: record the student immediately
+		// as PENDING. "Pay now" students are activated moments later by the
+		// paid-status hook; bank-transfer/cash students stay pending until
+		// the admin verifies and approves them on the Students screen.
+		$course_ids = self::courses_for_payment_form( $form_id );
+		if ( $course_ids && $user ) {
+			self::sync_profile_from_entry( $user->ID, $form_data );
+			foreach ( $course_ids as $course_id ) {
+				ASWJ_LMS_Enrollment::add_pending( $user->ID, $course_id, 'offline' );
+			}
+		}
+	}
+
+	/**
+	 * The user who submitted a form: the logged-in visitor if any,
+	 * otherwise matched by the submitted email address.
+	 *
+	 * @return WP_User|null
+	 */
+	private static function resolve_submitting_user( $form_data ) {
+		if ( is_user_logged_in() ) {
+			return wp_get_current_user();
+		}
 		$email = self::extract_email( $form_data );
-		if ( ! $email ) {
-			return;
+		if ( $email ) {
+			$user = get_user_by( 'email', $email );
+			if ( $user ) {
+				return $user;
+			}
 		}
-		$user = get_user_by( 'email', $email );
-		if ( ! $user ) {
-			return;
-		}
+		return null;
+	}
 
-		if ( ! user_can( $user, 'manage_options' ) && ! in_array( 'aswj_student', (array) $user->roles, true ) ) {
-			$user->add_role( 'aswj_student' );
-		}
+	/** @return int[] Course IDs whose payment form matches. */
+	private static function courses_for_payment_form( $form_id ) {
+		$ids = get_posts(
+			array(
+				'post_type'      => 'aswj_course',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_key'       => '_aswj_payment_form_id',
+				'meta_value'     => (int) $form_id,
+			)
+		);
+		return array_map( 'intval', $ids );
+	}
 
-		self::maybe_flag_sister_from_entry( $user->ID, $form_data );
+	/**
+	 * Copy profile details (gender/sister flag, phone, age) from a form
+	 * entry into the user account, using the field names from Settings.
+	 */
+	private static function sync_profile_from_entry( $user_id, $entry ) {
+		self::maybe_flag_sister_from_entry( $user_id, $entry );
+
+		$data = self::entry_to_array( $entry );
+
+		$map = array(
+			'phone_field_name'  => 'aswj_phone',
+			'age_field_name'    => 'aswj_age',
+			'gender_field_name' => 'aswj_gender',
+		);
+		foreach ( $map as $setting => $meta_key ) {
+			$field = (string) ASWJ_LMS_Settings::get( $setting );
+			if ( '' === $field || ! isset( $data[ $field ] ) ) {
+				continue;
+			}
+			$value = $data[ $field ];
+			if ( is_array( $value ) ) {
+				$value = implode( ' ', array_filter( array_map( 'strval', $value ) ) );
+			}
+			$value = sanitize_text_field( (string) $value );
+			if ( '' !== $value ) {
+				update_user_meta( $user_id, $meta_key, $value );
+			}
+		}
 	}
 
 	private static function maybe_flag_sister_from_entry( $user_id, $entry ) {
@@ -107,6 +183,64 @@ class ASWJ_LMS_FluentForms {
 		if ( false !== stripos( (string) $value, $target ) ) {
 			update_user_meta( $user_id, 'aswj_is_sister', '1' );
 		}
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Autofill for returning students
+	 * ------------------------------------------------------------------- */
+
+	/**
+	 * Pre-fill known fields on any Fluent Forms form for logged-in users so
+	 * returning students only need to complete new fields (e.g. payment).
+	 * Never overwrites a default the admin set on the field.
+	 */
+	public static function autofill_field( $data, $form ) {
+		if ( ! is_user_logged_in() || ! is_array( $data ) ) {
+			return $data;
+		}
+		$user    = wp_get_current_user();
+		$element = isset( $data['element'] ) ? $data['element'] : '';
+		$name    = isset( $data['attributes']['name'] ) ? strtolower( (string) $data['attributes']['name'] ) : '';
+
+		$phone_field  = strtolower( (string) ASWJ_LMS_Settings::get( 'phone_field_name' ) );
+		$age_field    = strtolower( (string) ASWJ_LMS_Settings::get( 'age_field_name' ) );
+		$gender_field = strtolower( (string) ASWJ_LMS_Settings::get( 'gender_field_name' ) );
+
+		// Composite name field (first/last).
+		if ( 'input_name' === $element && ! empty( $data['fields'] ) && is_array( $data['fields'] ) ) {
+			$parts = array(
+				'first_name' => $user->first_name ? $user->first_name : $user->display_name,
+				'last_name'  => $user->last_name,
+			);
+			foreach ( $parts as $key => $value ) {
+				if ( $value && isset( $data['fields'][ $key ]['attributes'] ) && empty( $data['fields'][ $key ]['attributes']['value'] ) ) {
+					$data['fields'][ $key ]['attributes']['value'] = $value;
+				}
+			}
+			return $data;
+		}
+
+		if ( ! isset( $data['attributes'] ) || ! empty( $data['attributes']['value'] ) ) {
+			return $data;
+		}
+
+		$value = '';
+		if ( 'input_email' === $element ) {
+			$value = $user->user_email;
+		} elseif ( 'phone' === $element || ( $phone_field && $name === $phone_field ) ) {
+			$value = (string) get_user_meta( $user->ID, 'aswj_phone', true );
+		} elseif ( $age_field && $name === $age_field ) {
+			$value = (string) get_user_meta( $user->ID, 'aswj_age', true );
+		} elseif ( $gender_field && $name === $gender_field ) {
+			$value = (string) get_user_meta( $user->ID, 'aswj_gender', true );
+		} elseif ( 'input_text' === $element && in_array( $name, array( 'name', 'full_name', 'your_name' ), true ) ) {
+			$value = $user->display_name;
+		}
+
+		if ( '' !== $value ) {
+			$data['attributes']['value'] = $value;
+		}
+		return $data;
 	}
 
 	/* ---------------------------------------------------------------------
@@ -180,23 +314,15 @@ class ASWJ_LMS_FluentForms {
 		}
 		$user_id = self::resolve_user_id( $submission );
 		if ( $user_id ) {
+			ASWJ_LMS_Access::set_subscription_active( $user_id, false );
 			ASWJ_LMS_Enrollment::revoke_subscription_enrollments( $user_id );
 		}
 	}
 
 	private static function grant_subscription_access( $user_id ) {
-		$course_ids = get_posts(
-			array(
-				'post_type'      => 'aswj_course',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_key'       => '_aswj_access_type',
-				'meta_value'     => 'subscription',
-			)
-		);
-		foreach ( $course_ids as $course_id ) {
-			ASWJ_LMS_Enrollment::enroll( $user_id, (int) $course_id, 'subscription' );
-		}
+		// All-access flag: unlocks every paid/subscription course, including
+		// courses published after the student subscribed.
+		ASWJ_LMS_Access::set_subscription_active( $user_id, true );
 	}
 
 	/* ---------------------------------------------------------------------

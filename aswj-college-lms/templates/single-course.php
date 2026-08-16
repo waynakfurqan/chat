@@ -89,7 +89,12 @@ while ( have_posts() ) :
 						<h3><?php esc_html_e( 'Course Locked', 'aswj-lms' ); ?></h3>
 						<p><?php echo esc_html( $notice['message'] ); ?></p>
 						<?php if ( $notice['cta_url'] ) : ?>
-							<p><a class="aswj-btn" href="<?php echo esc_url( $notice['cta_url'] ); ?>"><?php echo esc_html( $notice['cta_label'] ); ?></a></p>
+							<p>
+								<a class="aswj-btn" href="<?php echo esc_url( $notice['cta_url'] ); ?>"><?php echo esc_html( $notice['cta_label'] ); ?></a>
+								<?php if ( 'payment' === $check['reason'] && ASWJ_LMS_Settings::subscribe_url() ) : ?>
+									<a class="aswj-btn aswj-btn-outline" href="<?php echo esc_url( ASWJ_LMS_Settings::subscribe_url() ); ?>"><?php esc_html_e( 'Subscribe Monthly', 'aswj-lms' ); ?></a>
+								<?php endif; ?>
+							</p>
 						<?php endif; ?>
 						<?php if ( ! $user_id ) : ?>
 							<p class="aswj-small"><a href="<?php echo esc_url( ASWJ_LMS_Settings::registration_url() ); ?>"><?php esc_html_e( 'New here? Create an account', 'aswj-lms' ); ?></a></p>

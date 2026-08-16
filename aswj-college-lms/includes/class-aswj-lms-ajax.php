@@ -60,9 +60,12 @@ class ASWJ_LMS_Ajax {
 			wp_send_json_error( array( 'message' => __( 'You do not have access to this course.', 'aswj-lms' ) ), 403 );
 		}
 
-		// Ensure the student is recorded as enrolled once they start ticking lessons.
-		if ( ! ASWJ_LMS_Enrollment::is_enrolled( $user_id, $course_id ) ) {
-			ASWJ_LMS_Enrollment::enroll( $user_id, $course_id, ASWJ_LMS_Access::get_access_type( $course_id ) === 'free' ? 'free' : 'manual' );
+		// Record free-course students as enrolled once they start ticking
+		// lessons (so the course appears under "My Courses"). Paid/subscriber
+		// access is tracked by payment hooks and the subscription flag, so no
+		// permanent enrollment row is created here for those.
+		if ( 'free' === ASWJ_LMS_Access::get_access_type( $course_id ) && ! ASWJ_LMS_Enrollment::is_enrolled( $user_id, $course_id ) ) {
+			ASWJ_LMS_Enrollment::enroll( $user_id, $course_id, 'free' );
 		}
 
 		$completed = isset( $_POST['completed'] ) && '1' === $_POST['completed'];

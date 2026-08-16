@@ -362,3 +362,24 @@ a.aswj-lesson-link:hover { color: var(--aswj-blue); }
 }
 .aswj-profile-list dt { font-weight: 700; color: var(--aswj-blue-dark); }
 .aswj-profile-list dd { margin: 0; }
+
+.aswj-form-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 0.75rem 1.25rem;
+	margin-bottom: 0.75rem;
+}
+.aswj-form-field { margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.aswj-form-field label { font-weight: 600; color: var(--aswj-blue-dark); font-size: 0.9rem; }
+.aswj-form-field input {
+	border: 1px solid var(--aswj-border);
+	border-radius: 8px;
+	padding: 0.5rem 0.75rem;
+	background: #fff;
+	font-size: 0.95rem;
+}
+.aswj-form-field input:focus {
+	outline: 2px solid var(--aswj-blue);
+	outline-offset: 1px;
+	border-color: var(--aswj-blue);
+}

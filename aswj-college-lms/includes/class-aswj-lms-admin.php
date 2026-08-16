@@ -92,10 +92,38 @@ class ASWJ_LMS_Admin {
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="phone_field_name"><?php esc_html_e( 'Phone field name', 'aswj-lms' ); ?></label></th>
+						<td>
+							<input type="text" name="phone_field_name" id="phone_field_name" value="<?php echo esc_attr( $s['phone_field_name'] ); ?>" class="regular-text" />
+							<p class="description"><?php esc_html_e( 'Name attribute of the phone field on your forms (default: phone). Saved to the student profile and auto-filled on future forms.', 'aswj-lms' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="age_field_name"><?php esc_html_e( 'Age field name', 'aswj-lms' ); ?></label></th>
+						<td>
+							<input type="text" name="age_field_name" id="age_field_name" value="<?php echo esc_attr( $s['age_field_name'] ); ?>" class="regular-text" />
+							<p class="description"><?php esc_html_e( 'Name attribute of the age field on your forms (default: age).', 'aswj-lms' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="youtube_api_key"><?php esc_html_e( 'YouTube Data API key', 'aswj-lms' ); ?></label></th>
+						<td>
+							<input type="text" name="youtube_api_key" id="youtube_api_key" value="<?php echo esc_attr( $s['youtube_api_key'] ); ?>" class="regular-text" autocomplete="off" />
+							<p class="description"><?php esc_html_e( 'Optional but recommended for the playlist import (free — see SETUP.md). Without a key the plugin falls back to reading the public playlist page.', 'aswj-lms' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="subscription_form_ids"><?php esc_html_e( 'Subscription form IDs', 'aswj-lms' ); ?></label></th>
 						<td>
 							<input type="text" name="subscription_form_ids" id="subscription_form_ids" value="<?php echo esc_attr( $s['subscription_form_ids'] ); ?>" class="regular-text" placeholder="e.g. 12, 15" />
-							<p class="description"><?php esc_html_e( 'Comma-separated Fluent Forms form IDs. An active subscription paid via these forms unlocks ALL courses with the "Subscription" access type.', 'aswj-lms' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Comma-separated Fluent Forms form IDs. An active subscription paid via these forms unlocks ALL paid and subscription courses (all-access).', 'aswj-lms' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="subscribe_page_id"><?php esc_html_e( 'Subscribe page', 'aswj-lms' ); ?></label></th>
+						<td>
+							<?php self::pages_dropdown( 'subscribe_page_id', (int) $s['subscribe_page_id'] ); ?>
+							<p class="description"><?php esc_html_e( 'The page containing your monthly subscription form. Locked paid courses will offer this as an option.', 'aswj-lms' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -137,7 +165,11 @@ class ASWJ_LMS_Admin {
 				'registration_form_id'  => isset( $_POST['registration_form_id'] ) ? absint( $_POST['registration_form_id'] ) : 0,
 				'gender_field_name'     => isset( $_POST['gender_field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['gender_field_name'] ) ) : 'gender',
 				'sister_field_value'    => isset( $_POST['sister_field_value'] ) ? sanitize_text_field( wp_unslash( $_POST['sister_field_value'] ) ) : 'female',
+				'phone_field_name'      => isset( $_POST['phone_field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['phone_field_name'] ) ) : 'phone',
+				'age_field_name'        => isset( $_POST['age_field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['age_field_name'] ) ) : 'age',
+				'youtube_api_key'       => isset( $_POST['youtube_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['youtube_api_key'] ) ) : '',
 				'subscription_form_ids' => isset( $_POST['subscription_form_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['subscription_form_ids'] ) ) : '',
+				'subscribe_page_id'     => isset( $_POST['subscribe_page_id'] ) ? absint( $_POST['subscribe_page_id'] ) : 0,
 				'contact_email'         => isset( $_POST['contact_email'] ) ? sanitize_email( wp_unslash( $_POST['contact_email'] ) ) : '',
 			)
 		);
@@ -205,12 +237,18 @@ class ASWJ_LMS_Admin {
 					<?php
 					$is_sister  = ASWJ_LMS_Access::is_sister( $user->ID );
 					$is_diploma = ASWJ_LMS_Access::is_diploma_student( $user->ID );
+					$has_sub    = ASWJ_LMS_Access::has_active_subscription( $user->ID );
 					$enrolled   = ASWJ_LMS_Enrollment::get_user_course_ids( $user->ID );
+					$pending    = ASWJ_LMS_Enrollment::get_user_pending_course_ids( $user->ID );
+					$phone      = get_user_meta( $user->ID, 'aswj_phone', true );
 					?>
 					<tr>
 						<td>
 							<strong><?php echo esc_html( $user->display_name ); ?></strong><br />
 							<span class="description"><?php echo esc_html( $user->user_email ); ?></span>
+							<?php if ( $phone ) : ?>
+								<br /><span class="description"><?php echo esc_html( $phone ); ?></span>
+							<?php endif; ?>
 						</td>
 						<td>
 							<?php
@@ -221,20 +259,22 @@ class ASWJ_LMS_Admin {
 							if ( $is_sister ) {
 								$tags[] = __( 'Sister', 'aswj-lms' );
 							}
+							if ( $has_sub ) {
+								$tags[] = __( 'Subscriber', 'aswj-lms' );
+							}
 							echo esc_html( $tags ? implode( ', ', $tags ) : '—' );
 							?>
 						</td>
 						<td>
 							<?php
-							if ( $enrolled ) {
-								$names = array();
-								foreach ( $enrolled as $cid ) {
-									$names[] = get_the_title( $cid );
-								}
-								echo esc_html( implode( ', ', array_filter( $names ) ) );
-							} else {
-								echo '—';
+							$bits = array();
+							foreach ( $enrolled as $cid ) {
+								$bits[] = esc_html( get_the_title( $cid ) );
 							}
+							foreach ( $pending as $cid ) {
+								$bits[] = '<span style="color:#b45309;font-weight:600">' . esc_html( get_the_title( $cid ) ) . ' ' . esc_html__( '(awaiting payment)', 'aswj-lms' ) . '</span>';
+							}
+							echo $bits ? wp_kses_post( implode( '<br />', $bits ) ) : '—';
 							?>
 						</td>
 						<td>
@@ -244,15 +284,24 @@ class ASWJ_LMS_Admin {
 								<?php wp_nonce_field( 'aswj_update_student_' . $user->ID ); ?>
 								<label><input type="checkbox" name="is_diploma" value="1" <?php checked( $is_diploma ); ?> /> <?php esc_html_e( 'Diploma', 'aswj-lms' ); ?></label>
 								<label><input type="checkbox" name="is_sister" value="1" <?php checked( $is_sister ); ?> /> <?php esc_html_e( 'Sister', 'aswj-lms' ); ?></label>
+								<?php if ( $pending ) : ?>
+									<select name="approve_course_id">
+										<option value="0"><?php esc_html_e( '— Approve payment for —', 'aswj-lms' ); ?></option>
+										<?php foreach ( $pending as $cid ) : ?>
+											<option value="<?php echo (int) $cid; ?>"><?php echo esc_html( get_the_title( $cid ) ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								<?php endif; ?>
 								<select name="enroll_course_id">
 									<option value="0"><?php esc_html_e( '— Enroll in course —', 'aswj-lms' ); ?></option>
 									<?php foreach ( $courses as $course ) : ?>
 										<option value="<?php echo (int) $course->ID; ?>"><?php echo esc_html( $course->post_title ); ?></option>
 									<?php endforeach; ?>
 								</select>
+								<label><input type="checkbox" name="enroll_as_sponsored" value="1" /> <?php esc_html_e( 'as sponsored/excused', 'aswj-lms' ); ?></label>
 								<select name="unenroll_course_id">
 									<option value="0"><?php esc_html_e( '— Remove from course —', 'aswj-lms' ); ?></option>
-									<?php foreach ( $enrolled as $cid ) : ?>
+									<?php foreach ( array_unique( array_merge( $enrolled, $pending ) ) as $cid ) : ?>
 										<option value="<?php echo (int) $cid; ?>"><?php echo esc_html( get_the_title( $cid ) ); ?></option>
 									<?php endforeach; ?>
 								</select>
@@ -305,9 +354,15 @@ class ASWJ_LMS_Admin {
 			update_user_meta( $user_id, 'aswj_is_diploma', isset( $_POST['is_diploma'] ) ? '1' : '0' );
 			update_user_meta( $user_id, 'aswj_is_sister', isset( $_POST['is_sister'] ) ? '1' : '0' );
 
+			$approve = isset( $_POST['approve_course_id'] ) ? absint( $_POST['approve_course_id'] ) : 0;
+			if ( $approve ) {
+				ASWJ_LMS_Enrollment::enroll( $user_id, $approve, 'payment' );
+			}
+
 			$enroll = isset( $_POST['enroll_course_id'] ) ? absint( $_POST['enroll_course_id'] ) : 0;
 			if ( $enroll ) {
-				ASWJ_LMS_Enrollment::enroll( $user_id, $enroll, 'manual' );
+				$source = isset( $_POST['enroll_as_sponsored'] ) ? 'sponsored' : 'manual';
+				ASWJ_LMS_Enrollment::enroll( $user_id, $enroll, $source );
 			}
 			$unenroll = isset( $_POST['unenroll_course_id'] ) ? absint( $_POST['unenroll_course_id'] ) : 0;
 			if ( $unenroll ) {

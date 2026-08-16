@@ -33,8 +33,20 @@ class ASWJ_LMS_Access {
 	}
 
 	/**
+	 * The monthly subscription is all-access: while active it unlocks every
+	 * paid and subscription-type course (group restrictions still apply).
+	 */
+	public static function has_active_subscription( $user_id ) {
+		return '1' === get_user_meta( $user_id, 'aswj_sub_active', true );
+	}
+
+	public static function set_subscription_active( $user_id, $active ) {
+		update_user_meta( $user_id, 'aswj_sub_active', $active ? '1' : '0' );
+	}
+
+	/**
 	 * @return array{allowed: bool, reason: string}
-	 *         reason: ok|login|sisters|payment|subscription|diploma
+	 *         reason: ok|login|sisters|payment|subscription|diploma|pending
 	 */
 	public static function check( $user_id, $course_id ) {
 		$user_id   = (int) $user_id;
@@ -74,11 +86,20 @@ class ASWJ_LMS_Access {
 				return array( 'allowed' => false, 'reason' => 'diploma' );
 
 			case 'subscription':
-				return array( 'allowed' => false, 'reason' => 'subscription' );
-
 			case 'paid':
 			default:
-				return array( 'allowed' => false, 'reason' => 'payment' );
+				// The monthly subscription unlocks all paid content.
+				if ( self::has_active_subscription( $user_id ) ) {
+					return array( 'allowed' => true, 'reason' => 'ok' );
+				}
+				// Registered but awaiting bank-transfer/cash verification?
+				if ( ASWJ_LMS_Enrollment::is_pending( $user_id, $course_id ) ) {
+					return array( 'allowed' => false, 'reason' => 'pending' );
+				}
+				return array(
+					'allowed' => false,
+					'reason'  => 'subscription' === $type ? 'subscription' : 'payment',
+				);
 		}
 	}
 
@@ -118,6 +139,12 @@ class ASWJ_LMS_Access {
 					'cta_url'   => wp_login_url( get_permalink( $course_id ) ),
 					'cta_label' => __( 'Log In', 'aswj-lms' ),
 				);
+			case 'pending':
+				return array(
+					'message'   => __( 'Your registration has been received. Access will be unlocked once your payment is verified by the college — jazakum Allahu khayran for your patience.', 'aswj-lms' ),
+					'cta_url'   => '',
+					'cta_label' => '',
+				);
 			case 'sisters':
 				return array(
 					'message'   => __( 'This course is exclusively for our sisters. If you believe you should have access, please contact the college.', 'aswj-lms' ),
@@ -131,15 +158,23 @@ class ASWJ_LMS_Access {
 					'cta_label' => '',
 				);
 			case 'subscription':
+				$cta = self::purchase_url( $course_id );
+				if ( ! $cta ) {
+					$cta = ASWJ_LMS_Settings::subscribe_url();
+				}
 				return array(
-					'message'   => __( 'This course requires an active subscription.', 'aswj-lms' ),
-					'cta_url'   => self::purchase_url( $course_id ),
+					'message'   => __( 'This course is part of our monthly all-access subscription.', 'aswj-lms' ),
+					'cta_url'   => $cta,
 					'cta_label' => __( 'Subscribe', 'aswj-lms' ),
 				);
 			case 'payment':
 			default:
+				$message = __( 'This is a paid course. Enroll to get full access.', 'aswj-lms' );
+				if ( ASWJ_LMS_Settings::subscribe_url() ) {
+					$message = __( 'This is a paid course. Enroll below, or subscribe monthly for access to all our courses.', 'aswj-lms' );
+				}
 				return array(
-					'message'   => __( 'This is a paid course. Enroll to get full access.', 'aswj-lms' ),
+					'message'   => $message,
 					'cta_url'   => self::purchase_url( $course_id ),
 					'cta_label' => __( 'Enroll Now', 'aswj-lms' ),
 				);

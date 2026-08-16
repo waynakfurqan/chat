@@ -28,6 +28,8 @@ require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-access.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-progress.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-video.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-ajax.php';
+require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-profile.php';
+require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-playlist.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-shortcodes.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-templates.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-fluentforms.php';
@@ -57,6 +59,8 @@ final class ASWJ_LMS {
 		ASWJ_LMS_Enrollment::init();
 		ASWJ_LMS_Progress::init();
 		ASWJ_LMS_Ajax::init();
+		ASWJ_LMS_Profile::init();
+		ASWJ_LMS_Playlist::init();
 		ASWJ_LMS_Shortcodes::init();
 		ASWJ_LMS_Templates::init();
 		ASWJ_LMS_FluentForms::init();
