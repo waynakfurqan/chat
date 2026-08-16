@@ -1,0 +1,361 @@
+/* ASWJ College LMS — white / blue / green branding */
+
+.aswj-lms {
+	--aswj-blue: #1a4f8b;
+	--aswj-blue-dark: #123a68;
+	--aswj-green: #1e7d5e;
+	--aswj-green-dark: #155c45;
+	--aswj-gold: #b98a2f;
+	--aswj-bg: #ffffff;
+	--aswj-bg-soft: #f4f8f6;
+	--aswj-border: #dde7e2;
+	--aswj-text: #1c2b33;
+	--aswj-muted: #5c6f7a;
+	color: var(--aswj-text);
+	line-height: 1.6;
+}
+
+.aswj-lms h1,
+.aswj-lms h2,
+.aswj-lms h3 {
+	color: var(--aswj-blue-dark);
+	line-height: 1.25;
+}
+
+.aswj-muted { color: var(--aswj-muted); }
+.aswj-small { font-size: 0.875rem; }
+
+/* Buttons ---------------------------------------------------------------- */
+.aswj-btn {
+	display: inline-block;
+	background: var(--aswj-green);
+	color: #fff !important;
+	border: 2px solid var(--aswj-green);
+	border-radius: 8px;
+	padding: 0.55rem 1.25rem;
+	font-weight: 600;
+	text-decoration: none !important;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+.aswj-btn:hover { background: var(--aswj-green-dark); border-color: var(--aswj-green-dark); }
+.aswj-btn-outline {
+	background: transparent;
+	color: var(--aswj-blue) !important;
+	border-color: var(--aswj-blue);
+}
+.aswj-btn-outline:hover { background: var(--aswj-blue); color: #fff !important; }
+.aswj-btn-block { display: block; text-align: center; }
+
+/* Badges & tags ---------------------------------------------------------- */
+.aswj-badge {
+	display: inline-block;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	padding: 0.25rem 0.6rem;
+	border-radius: 999px;
+	background: var(--aswj-blue);
+	color: #fff;
+}
+.aswj-badge-free { background: var(--aswj-green); }
+.aswj-badge-paid { background: var(--aswj-blue); }
+.aswj-badge-subscription { background: var(--aswj-blue-dark); }
+.aswj-badge-diploma { background: var(--aswj-gold); }
+
+.aswj-tag {
+	display: inline-block;
+	font-size: 0.78rem;
+	font-weight: 600;
+	padding: 0.15rem 0.6rem;
+	border-radius: 999px;
+	background: var(--aswj-bg-soft);
+	border: 1px solid var(--aswj-border);
+	color: var(--aswj-blue-dark);
+	margin-right: 0.3rem;
+}
+.aswj-tag-gold { border-color: var(--aswj-gold); color: var(--aswj-gold); }
+.aswj-tag-green { border-color: var(--aswj-green); color: var(--aswj-green); }
+
+/* Notices ---------------------------------------------------------------- */
+.aswj-notice {
+	background: var(--aswj-bg-soft);
+	border: 1px solid var(--aswj-border);
+	border-left: 4px solid var(--aswj-green);
+	border-radius: 10px;
+	padding: 1.25rem 1.5rem;
+	margin: 1rem 0;
+}
+.aswj-notice-locked { border-left-color: var(--aswj-gold); }
+.aswj-notice h3 { margin-top: 0; }
+
+/* Course grid ------------------------------------------------------------ */
+.aswj-course-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 1.5rem;
+	margin: 1rem 0;
+}
+
+.aswj-course-card {
+	background: var(--aswj-bg);
+	border: 1px solid var(--aswj-border);
+	border-radius: 14px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.aswj-course-card:hover {
+	box-shadow: 0 8px 24px rgba(26, 79, 139, 0.12);
+	transform: translateY(-2px);
+}
+.aswj-course-card-thumb {
+	position: relative;
+	display: block;
+	aspect-ratio: 16 / 9;
+	background: linear-gradient(135deg, var(--aswj-blue) 0%, var(--aswj-green) 100%);
+	overflow: hidden;
+}
+.aswj-course-card-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.aswj-thumb-placeholder {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 2.4rem;
+	color: rgba(255, 255, 255, 0.85);
+}
+.aswj-course-card-thumb .aswj-badge {
+	position: absolute;
+	top: 0.75rem;
+	left: 0.75rem;
+}
+.aswj-course-card-body {
+	padding: 1.1rem 1.25rem 1.35rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	flex: 1;
+}
+.aswj-course-card-title { margin: 0; font-size: 1.15rem; }
+.aswj-course-card-title a { color: var(--aswj-blue-dark); text-decoration: none; }
+.aswj-course-card-excerpt { margin: 0; color: var(--aswj-muted); font-size: 0.92rem; flex: 1; }
+.aswj-price { font-weight: 700; color: var(--aswj-green-dark); margin: 0; }
+
+/* Progress bars ---------------------------------------------------------- */
+.aswj-progress {
+	background: var(--aswj-bg-soft);
+	border: 1px solid var(--aswj-border);
+	border-radius: 999px;
+	height: 12px;
+	overflow: hidden;
+}
+.aswj-progress-bar {
+	height: 100%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, var(--aswj-green) 0%, var(--aswj-blue) 100%);
+	transition: width 0.4s ease;
+}
+.aswj-progress-hero { max-width: 420px; }
+
+/* Course hero ------------------------------------------------------------ */
+.aswj-course-hero {
+	background: linear-gradient(135deg, var(--aswj-blue-dark) 0%, var(--aswj-blue) 55%, var(--aswj-green) 100%);
+	color: #fff;
+	border-radius: 16px;
+	margin: 1rem 0 2rem;
+}
+.aswj-course-hero-inner { padding: 2.5rem 2rem; }
+.aswj-course-hero h1.aswj-course-title { color: #fff; margin: 0.5rem 0; }
+.aswj-course-hero .aswj-course-tagline { color: rgba(255, 255, 255, 0.9); font-size: 1.05rem; }
+.aswj-course-hero .aswj-course-meta { color: rgba(255, 255, 255, 0.8); }
+.aswj-course-hero .aswj-badge { background: rgba(255, 255, 255, 0.18); }
+.aswj-course-hero .aswj-small { color: rgba(255, 255, 255, 0.85); }
+.aswj-breadcrumb a { color: inherit; opacity: 0.85; text-decoration: none; font-size: 0.9rem; }
+
+/* Course / lesson layouts ------------------------------------------------ */
+.aswj-course-layout,
+.aswj-lesson-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+	gap: 2.5rem;
+	align-items: start;
+	margin-bottom: 3rem;
+}
+@media (max-width: 880px) {
+	.aswj-course-layout,
+	.aswj-lesson-layout { grid-template-columns: 1fr; }
+}
+.aswj-course-side,
+.aswj-lesson-side {
+	background: var(--aswj-bg-soft);
+	border: 1px solid var(--aswj-border);
+	border-radius: 14px;
+	padding: 1.25rem 1.5rem;
+	position: sticky;
+	top: 2rem;
+}
+
+/* Lesson list ------------------------------------------------------------ */
+.aswj-lesson-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.aswj-lesson-item {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.6rem 0.5rem;
+	border-bottom: 1px solid var(--aswj-border);
+}
+.aswj-lesson-item:last-child { border-bottom: none; }
+.aswj-lesson-item.is-current { background: rgba(26, 79, 139, 0.07); border-radius: 8px; }
+.aswj-lesson-tick {
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.8rem;
+	font-weight: 700;
+	background: #fff;
+	border: 2px solid var(--aswj-border);
+	color: var(--aswj-muted);
+}
+.aswj-lesson-item.is-complete .aswj-lesson-tick {
+	background: var(--aswj-green);
+	border-color: var(--aswj-green);
+	color: #fff;
+}
+.aswj-lesson-link {
+	color: var(--aswj-text);
+	text-decoration: none;
+	font-weight: 500;
+	flex: 1;
+}
+a.aswj-lesson-link:hover { color: var(--aswj-blue); }
+.aswj-lesson-item.is-locked .aswj-lesson-link { color: var(--aswj-muted); }
+.aswj-lock { font-size: 0.85rem; }
+
+/* Video ------------------------------------------------------------------ */
+.aswj-video-frame,
+.aswj-video-player {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	background: #0c1a24;
+	border-radius: 14px;
+	overflow: hidden;
+	margin: 1rem 0;
+}
+.aswj-video-player iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+/* Shield only the top strip where YouTube shows title / share links. */
+.aswj-video-shield {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 62px;
+	z-index: 2;
+}
+.aswj-video-loading,
+.aswj-video-error {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	color: #cfe3dc;
+	gap: 0.75rem;
+	padding: 1rem;
+	text-align: center;
+}
+.aswj-video-empty {
+	background: var(--aswj-bg-soft);
+	border: 1px dashed var(--aswj-border);
+	border-radius: 14px;
+	padding: 2.5rem 1rem;
+	text-align: center;
+	color: var(--aswj-muted);
+	margin: 1rem 0;
+}
+.aswj-spinner {
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	border: 3px solid rgba(255, 255, 255, 0.25);
+	border-top-color: #fff;
+	animation: aswj-spin 0.9s linear infinite;
+}
+@keyframes aswj-spin { to { transform: rotate(360deg); } }
+
+/* Lesson actions --------------------------------------------------------- */
+.aswj-lesson-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: center;
+	justify-content: space-between;
+	margin: 1rem 0 2rem;
+}
+.aswj-lesson-nav { display: flex; gap: 0.5rem; }
+
+.aswj-complete-toggle .aswj-toggle-label-done { display: none; }
+.aswj-complete-toggle.is-complete { background: var(--aswj-blue); border-color: var(--aswj-blue); }
+.aswj-complete-toggle.is-complete .aswj-toggle-label-done { display: inline; }
+.aswj-complete-toggle.is-complete .aswj-toggle-label-todo { display: none; }
+
+/* Portal ------------------------------------------------------------------ */
+.aswj-portal-header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem;
+	align-items: center;
+	justify-content: space-between;
+	background: linear-gradient(135deg, var(--aswj-blue-dark) 0%, var(--aswj-blue) 55%, var(--aswj-green) 100%);
+	color: #fff;
+	border-radius: 16px;
+	padding: 2rem;
+	margin-bottom: 2rem;
+}
+.aswj-portal-salam { margin: 0; opacity: 0.85; }
+.aswj-portal-name { color: #fff !important; margin: 0.15rem 0 0.6rem; }
+.aswj-portal-tags .aswj-tag { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.35); color: #fff; }
+.aswj-portal-tags .aswj-tag-gold { color: #ffd98a; border-color: #ffd98a; }
+.aswj-portal-tags .aswj-tag-green { color: #a5f0d3; border-color: #a5f0d3; }
+.aswj-portal-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.aswj-portal-actions .aswj-btn-outline { color: #fff !important; border-color: rgba(255, 255, 255, 0.7); }
+.aswj-portal-actions .aswj-btn-outline:hover { background: rgba(255, 255, 255, 0.15); }
+.aswj-portal-section { margin-bottom: 2.5rem; }
+
+.aswj-profile-card {
+	background: var(--aswj-bg-soft);
+	border: 1px solid var(--aswj-border);
+	border-radius: 14px;
+	padding: 1.5rem;
+}
+.aswj-profile-list {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.4rem 1.5rem;
+	margin: 0 0 1rem;
+}
+.aswj-profile-list dt { font-weight: 700; color: var(--aswj-blue-dark); }
+.aswj-profile-list dd { margin: 0; }
