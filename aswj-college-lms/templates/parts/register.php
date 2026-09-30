@@ -38,10 +38,10 @@ $form_id = (int) ASWJ_LMS_Settings::get( 'registration_form_id' );
 	</div>
 	<div class="aswj-auth-form aswj-card">
 		<?php
-		if ( $form_id ) {
+		if ( $form_id && shortcode_exists( 'fluentform' ) ) {
 			echo do_shortcode( '[fluentform id="' . $form_id . '"]' );
 		} else {
-			echo '<p class="aswj-muted">' . esc_html__( 'Registration form coming soon — set the Registration form ID in ASWJ Courses → Settings.', 'aswj-lms' ) . '</p>';
+			echo '<p class="aswj-muted">' . esc_html__( 'Registration form coming soon — set the Registration form ID in ASWJ Courses → Settings (requires Fluent Forms).', 'aswj-lms' ) . '</p>';
 		}
 		?>
 	</div>

@@ -59,7 +59,7 @@ $pending   = $user_id && ASWJ_LMS_Enrollment::is_pending( $user_id, $course_id )
 					<h3><?php esc_html_e( 'Registration received', 'aswj-lms' ); ?></h3>
 					<p><?php esc_html_e( 'Your registration is awaiting payment verification. Access will be unlocked once the college confirms your payment, in shaa Allah.', 'aswj-lms' ); ?></p>
 				</div>
-			<?php elseif ( $form_id ) : ?>
+			<?php elseif ( $form_id && shortcode_exists( 'fluentform' ) ) : ?>
 				<?php echo do_shortcode( '[fluentform id="' . $form_id . '"]' ); ?>
 			<?php else : ?>
 				<p class="aswj-muted"><?php esc_html_e( 'Enrollment opens soon, in shaa Allah.', 'aswj-lms' ); ?></p>
