@@ -46,7 +46,7 @@ class ASWJ_LMS_FluentForms {
 
 		// Autofill known fields (name, email, phone, gender, age) for
 		// logged-in students so returning students only fill in what's new.
-		foreach ( array( 'input_name', 'input_email', 'input_text', 'input_number', 'phone', 'select', 'input_radio' ) as $element ) {
+		foreach ( array( 'input_name', 'input_email', 'input_text', 'input_number', 'phone', 'select', 'input_radio', 'input_date' ) as $element ) {
 			add_filter( 'fluentform/rendering_field_data_' . $element, array( __CLASS__, 'autofill_field' ), 10, 2 );
 			add_filter( 'fluentform_rendering_field_data_' . $element, array( __CLASS__, 'autofill_field' ), 10, 2 ); // pre-5.0
 		}
@@ -161,6 +161,13 @@ class ASWJ_LMS_FluentForms {
 				update_user_meta( $user_id, $meta_key, $value );
 			}
 		}
+
+		// Date of birth: stored raw for autofill + normalized for age
+		// calculation (so forms can ask for DOB instead of a static age).
+		$dob_field = (string) ASWJ_LMS_Settings::get( 'dob_field_name' );
+		if ( $dob_field && isset( $data[ $dob_field ] ) && ! is_array( $data[ $dob_field ] ) ) {
+			ASWJ_LMS_Profile::save_dob( $user_id, (string) $data[ $dob_field ] );
+		}
 	}
 
 	private static function maybe_flag_sister_from_entry( $user_id, $entry ) {
@@ -205,6 +212,7 @@ class ASWJ_LMS_FluentForms {
 		$phone_field  = strtolower( (string) ASWJ_LMS_Settings::get( 'phone_field_name' ) );
 		$age_field    = strtolower( (string) ASWJ_LMS_Settings::get( 'age_field_name' ) );
 		$gender_field = strtolower( (string) ASWJ_LMS_Settings::get( 'gender_field_name' ) );
+		$dob_field    = strtolower( (string) ASWJ_LMS_Settings::get( 'dob_field_name' ) );
 
 		// Composite name field (first/last).
 		if ( 'input_name' === $element && ! empty( $data['fields'] ) && is_array( $data['fields'] ) ) {
@@ -229,8 +237,12 @@ class ASWJ_LMS_FluentForms {
 			$value = $user->user_email;
 		} elseif ( 'phone' === $element || ( $phone_field && $name === $phone_field ) ) {
 			$value = (string) get_user_meta( $user->ID, 'aswj_phone', true );
+		} elseif ( $dob_field && $name === $dob_field ) {
+			$value = (string) get_user_meta( $user->ID, 'aswj_dob_raw', true );
+		} elseif ( 'input_date' === $element ) {
+			$value = (string) get_user_meta( $user->ID, 'aswj_dob_raw', true );
 		} elseif ( $age_field && $name === $age_field ) {
-			$value = (string) get_user_meta( $user->ID, 'aswj_age', true );
+			$value = ASWJ_LMS_Profile::get_age( $user->ID );
 		} elseif ( $gender_field && $name === $gender_field ) {
 			$value = (string) get_user_meta( $user->ID, 'aswj_gender', true );
 		} elseif ( 'input_text' === $element && in_array( $name, array( 'name', 'full_name', 'your_name' ), true ) ) {

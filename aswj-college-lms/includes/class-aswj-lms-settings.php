@@ -20,10 +20,17 @@ class ASWJ_LMS_Settings {
 			'sister_field_value'     => 'female',
 			'phone_field_name'       => 'phone',
 			'age_field_name'         => 'age',
+			'dob_field_name'         => 'dob',
 			'subscription_form_ids'  => '',
 			'subscribe_page_id'      => 0,
+			'login_page_id'          => 0,
 			'youtube_api_key'        => '',
 			'contact_email'          => get_option( 'admin_email' ),
+			'logo_url'               => '',
+			'instagram_url'          => 'https://www.instagram.com/aswjcollege',
+			'facebook_url'           => 'https://www.facebook.com/aswjcollegemelb',
+			'hero_title'             => __( 'Seek Authentic Islamic Knowledge', 'aswj-lms' ),
+			'hero_subtitle'          => __( 'Structured courses upon the Quran and the Sunnah with the understanding of the righteous predecessors — study online, at your own pace, wherever you are.', 'aswj-lms' ),
 		);
 	}
 
@@ -69,5 +76,14 @@ class ASWJ_LMS_Settings {
 	public static function subscribe_url() {
 		$id = (int) self::get( 'subscribe_page_id' );
 		return $id ? get_permalink( $id ) : '';
+	}
+
+	public static function login_url_page( $redirect = '' ) {
+		$id = (int) self::get( 'login_page_id' );
+		if ( $id ) {
+			$url = get_permalink( $id );
+			return $redirect ? add_query_arg( 'redirect_to', rawurlencode( $redirect ), $url ) : $url;
+		}
+		return wp_login_url( $redirect );
 	}
 }

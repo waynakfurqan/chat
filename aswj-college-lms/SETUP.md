@@ -20,44 +20,59 @@ Requirements: WordPress 5.8+, PHP 7.4+, Fluent Forms + Fluent Forms Pro active.
 
 ---
 
-## 2. Create the site pages
+## 2. Create the site pages — one click
 
-Create these pages (Pages → Add New):
+Go to **ASWJ Courses → Settings** and press **Create Site Pages**. This
+creates fully designed, mobile-friendly pages and wires them into settings
+automatically:
 
-| Page              | Content                                    |
-|-------------------|--------------------------------------------|
-| **Courses**       | `[aswj_courses]`                           |
-| **Student Portal**| `[aswj_portal]`                            |
-| **Register**      | Your Fluent Forms registration form shortcode |
-| **Subscribe**     | Your monthly subscription form shortcode   |
-| One page per paid course (e.g. **Enroll — Aqeedah 101**) | That course's Fluent Forms payment form |
+| Page | URL | Contains |
+|------|-----|----------|
+| Home | `/home` (tick the box to make it your front page) | `[aswj_home]` — hero, current courses, features, ways to study, CTA + socials |
+| Courses | `/courses` | `[aswj_courses]` catalog |
+| Student Portal | `/student-portal` | `[aswj_portal]` |
+| Register | `/register` | `[aswj_register]` — welcome panel + your Fluent Forms registration form |
+| Login | `/login` | `[aswj_login]` styled login |
+| Subscribe | `/subscribe` | `[aswj_subscribe]` all-access pitch + subscription form |
 
-Then go to **ASWJ Courses → Settings** and select the Portal, Catalog and
-Registration pages, and fill in the registration form ID.
+Existing pages with the same slugs are reused, never overwritten — safe to
+press again any time. Enrollment pages for paid courses are created
+automatically per course (see §4), so there is nothing to copy-paste.
 
-Shortcode options for the catalog:
+**Home page "Current Courses" section:** tick **Currently running** in any
+course's *Course Access* box and it appears on the home page instantly;
+untick when the course finishes. No page editing needed.
+
+**Branding:** under Settings → *Branding & Home Page* you can set your logo
+image URL (upload to Media Library first), the hero title/subtitle text, and
+your Instagram/Facebook links (pre-filled with @aswjcollege /
+@aswjcollegemelb).
+
+Catalog shortcode options, if you build custom pages:
 
 - `[aswj_courses]` — all courses
 - `[aswj_courses type="free"]` — only free courses (`free|paid|subscription|diploma`)
 - `[aswj_courses sisters="1"]` — only sisters-only courses
+- `[aswj_courses running="1"]` — only currently-running courses
 
 ---
 
 ## 3. Account registration with Fluent Forms Pro
 
 1. **Fluent Forms → New Form.** Add fields: Name, Email, Username (or use
-   email as username), Password, **Phone**, **Age**, and a **Gender** field
+   email as username), Password, **Phone**, **Date of Birth** (a Date field —
+   better than asking for age, since age changes), and a **Gender** field
    (radio/select with values like `Male` / `Female`).
 2. Note each field's **Name attribute** (Input Customization → Name
-   Attribute), e.g. `gender`, `phone`, `age`.
+   Attribute), e.g. `gender`, `phone`, `dob`.
 3. In the form's **Settings → Marketing & CRM Integrations → User Registration**
    (Fluent Forms Pro module — enable it under Fluent Forms → Integrations if
    needed), add a **User Registration feed**: map Email/Username/Password, and
    set the default role to **Student**.
 4. In **ASWJ Courses → Settings**:
    - *Registration form ID* = this form's ID.
-   - *Gender / Phone / Age field names* = the name attributes from step 2
-     (defaults `gender`, `phone`, `age`).
+   - *Gender / Phone / DOB / Age field names* = the name attributes from
+     step 2 (defaults `gender`, `phone`, `dob`, `age`).
    - *Sister field value* = `female` (case-insensitive, default).
 
 When someone registers, the plugin automatically:
@@ -65,7 +80,10 @@ When someone registers, the plugin automatically:
 - ensures they have the **Student** role,
 - flags the account as a **Sister** when the gender field matches — this is
   what unlocks sisters-only courses, and
-- saves phone / age / gender to their student profile.
+- saves phone / date of birth / gender to their student profile. **Age is
+  calculated from the DOB automatically** and stays correct as students get
+  older (shown on the admin Students screen). Forms that only ask for "age"
+  still work — the plugin understands both.
 
 You can always correct the flags manually under **ASWJ Courses → Students**.
 
@@ -80,8 +98,10 @@ their account, so a returning student registering for a new course only
 completes what's new (e.g. the payment choice). Fields the plugin recognises:
 
 - Name and Email field types (always autofilled),
+- Date field types (filled with their date of birth),
 - the Phone field type, plus any field whose name attribute matches your
-  configured *phone*, *age* or *gender* field names,
+  configured *phone*, *dob*, *age* or *gender* field names (an "age" field is
+  filled with the age computed from their DOB),
 - simple text fields named `name`, `full_name` or `your_name`.
 
 Admin-set default values are never overwritten.
@@ -157,9 +177,11 @@ Payment Settings** (Stripe and/or PayPal).
    bank transfer / cash in person, enable the **Offline** payment method in
    Fluent Forms (Global Settings → Payment Settings → Offline) and customise
    its label/instructions (e.g. your bank details).
-2. Put the form on that course's purchase page.
-3. In the course's **Course Access** box set *Access type = Paid*, enter the
-   **payment form ID**, and select the **purchase page**.
+2. In the course's **Course Access** box set *Access type = Paid* and enter
+   the **payment form ID**, then save the course. **The enrollment page is
+   created for you automatically** (e.g. `/enroll-aqeedah-101`) with the
+   course summary and your payment form — "Enroll Now" buttons link straight
+   to it. (You can still pick a different page manually if you prefer.)
 
 What happens on submission:
 

@@ -127,6 +127,13 @@ class ASWJ_LMS_Meta_Boxes {
 			</label>
 		</p>
 		<p>
+			<label>
+				<input type="checkbox" name="aswj_running" value="1" <?php checked( '1' === get_post_meta( $post->ID, '_aswj_running', true ) ); ?> />
+				<strong><?php esc_html_e( 'Currently running', 'aswj-lms' ); ?></strong>
+			</label>
+			<span class="description"><?php esc_html_e( 'Shown in the "Current Courses" section on the home page. Untick when the course finishes.', 'aswj-lms' ); ?></span>
+		</p>
+		<p>
 			<label for="aswj_price_label"><strong><?php esc_html_e( 'Price label (display only)', 'aswj-lms' ); ?></strong></label>
 			<input type="text" name="aswj_price_label" id="aswj_price_label" value="<?php echo esc_attr( $price ); ?>" style="width:100%" placeholder="<?php esc_attr_e( 'e.g. $49 AUD or $10/month', 'aswj-lms' ); ?>" />
 		</p>
@@ -170,9 +177,40 @@ class ASWJ_LMS_Meta_Boxes {
 		}
 		update_post_meta( $post_id, '_aswj_access_type', $type );
 		update_post_meta( $post_id, '_aswj_sisters_only', isset( $_POST['aswj_sisters_only'] ) ? '1' : '0' );
+		update_post_meta( $post_id, '_aswj_running', isset( $_POST['aswj_running'] ) ? '1' : '0' );
 		update_post_meta( $post_id, '_aswj_price_label', isset( $_POST['aswj_price_label'] ) ? sanitize_text_field( wp_unslash( $_POST['aswj_price_label'] ) ) : '' );
-		update_post_meta( $post_id, '_aswj_payment_form_id', isset( $_POST['aswj_payment_form_id'] ) ? absint( $_POST['aswj_payment_form_id'] ) : 0 );
-		update_post_meta( $post_id, '_aswj_purchase_page_id', isset( $_POST['aswj_purchase_page_id'] ) ? absint( $_POST['aswj_purchase_page_id'] ) : 0 );
+
+		$payment_form_id  = isset( $_POST['aswj_payment_form_id'] ) ? absint( $_POST['aswj_payment_form_id'] ) : 0;
+		$purchase_page_id = isset( $_POST['aswj_purchase_page_id'] ) ? absint( $_POST['aswj_purchase_page_id'] ) : 0;
+		update_post_meta( $post_id, '_aswj_payment_form_id', $payment_form_id );
+
+		// A payment form with no purchase page: create the enrollment page
+		// automatically so "Enroll Now" has somewhere to send students.
+		if ( $payment_form_id && ! $purchase_page_id ) {
+			$purchase_page_id = self::create_enroll_page( $post_id );
+		}
+		update_post_meta( $post_id, '_aswj_purchase_page_id', $purchase_page_id );
+	}
+
+	private static function create_enroll_page( $course_id ) {
+		$course = get_post( $course_id );
+		$slug   = 'enroll-' . $course->post_name;
+
+		$existing = get_page_by_path( $slug );
+		if ( $existing ) {
+			return (int) $existing->ID;
+		}
+
+		$page_id = wp_insert_post(
+			array(
+				'post_type'    => 'page',
+				'post_status'  => 'publish',
+				'post_title'   => sprintf( /* translators: %s: course title */ __( 'Enroll — %s', 'aswj-lms' ), $course->post_title ),
+				'post_name'    => $slug,
+				'post_content' => '[aswj_enroll course_id="' . (int) $course_id . '"]',
+			)
+		);
+		return is_wp_error( $page_id ) ? 0 : (int) $page_id;
 	}
 
 	public static function render_lesson_box( $post ) {

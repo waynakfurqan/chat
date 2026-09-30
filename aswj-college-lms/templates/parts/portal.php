@@ -163,6 +163,10 @@ $profile_errors  = isset( $_GET['aswj_profile_error'] ) ? array_filter( explode(
 						<input type="text" id="aswj-phone" name="phone" value="<?php echo esc_attr( $phone ); ?>" />
 					</p>
 					<p class="aswj-form-field">
+						<label for="aswj-dob"><?php esc_html_e( 'Date of birth', 'aswj-lms' ); ?></label>
+						<input type="text" id="aswj-dob" name="dob" value="<?php echo esc_attr( get_user_meta( $user_id, 'aswj_dob_raw', true ) ); ?>" placeholder="DD/MM/YYYY" />
+					</p>
+					<p class="aswj-form-field">
 						<label for="aswj-new-password"><?php esc_html_e( 'New password', 'aswj-lms' ); ?></label>
 						<input type="password" id="aswj-new-password" name="new_password" autocomplete="new-password" placeholder="<?php esc_attr_e( 'Leave blank to keep current', 'aswj-lms' ); ?>" />
 					</p>

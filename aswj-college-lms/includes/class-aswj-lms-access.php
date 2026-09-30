@@ -136,7 +136,7 @@ class ASWJ_LMS_Access {
 			case 'login':
 				return array(
 					'message'   => __( 'Please log in or create a free account to access this course.', 'aswj-lms' ),
-					'cta_url'   => wp_login_url( get_permalink( $course_id ) ),
+					'cta_url'   => ASWJ_LMS_Settings::login_url_page( get_permalink( $course_id ) ),
 					'cta_label' => __( 'Log In', 'aswj-lms' ),
 				);
 			case 'pending':

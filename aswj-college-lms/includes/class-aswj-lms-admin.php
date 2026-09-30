@@ -12,6 +12,84 @@ class ASWJ_LMS_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_post_aswj_save_settings', array( __CLASS__, 'save_settings' ) );
 		add_action( 'admin_post_aswj_update_student', array( __CLASS__, 'update_student' ) );
+		add_action( 'admin_post_aswj_create_pages', array( __CLASS__, 'create_pages' ) );
+	}
+
+	/**
+	 * One-click site setup: creates the standard pages (each containing the
+	 * matching shortcode), wires them into Settings, and optionally sets the
+	 * home page as the site front page. Existing pages (by slug) are reused,
+	 * never overwritten.
+	 */
+	public static function create_pages() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Not allowed.', 'aswj-lms' ) );
+		}
+		check_admin_referer( 'aswj_create_pages' );
+
+		$result = self::ensure_site_pages();
+
+		if ( isset( $_POST['set_front_page'] ) && isset( $result['ids']['home'] ) ) {
+			update_option( 'show_on_front', 'page' );
+			update_option( 'page_on_front', $result['ids']['home'] );
+		}
+
+		wp_safe_redirect( add_query_arg( 'pages_created', $result['created'], admin_url( 'edit.php?post_type=aswj_course&page=aswj-settings' ) ) );
+		exit;
+	}
+
+	/**
+	 * Create any missing standard pages and wire them into settings.
+	 *
+	 * @return array{ids: array<string, int>, created: int}
+	 */
+	public static function ensure_site_pages() {
+		$pages = array(
+			'home'           => array( __( 'Home', 'aswj-lms' ), '[aswj_home]' ),
+			'courses'        => array( __( 'Courses', 'aswj-lms' ), '[aswj_courses]' ),
+			'student-portal' => array( __( 'Student Portal', 'aswj-lms' ), '[aswj_portal]' ),
+			'register'       => array( __( 'Register', 'aswj-lms' ), '[aswj_register]' ),
+			'login'          => array( __( 'Login', 'aswj-lms' ), '[aswj_login]' ),
+			'subscribe'      => array( __( 'Subscribe', 'aswj-lms' ), '[aswj_subscribe]' ),
+		);
+
+		$ids     = array();
+		$created = 0;
+		foreach ( $pages as $slug => $config ) {
+			$existing = get_page_by_path( $slug );
+			if ( $existing ) {
+				$ids[ $slug ] = (int) $existing->ID;
+				continue;
+			}
+			$page_id = wp_insert_post(
+				array(
+					'post_type'    => 'page',
+					'post_status'  => 'publish',
+					'post_title'   => $config[0],
+					'post_name'    => $slug,
+					'post_content' => $config[1],
+				)
+			);
+			if ( $page_id && ! is_wp_error( $page_id ) ) {
+				$ids[ $slug ] = (int) $page_id;
+				$created++;
+			}
+		}
+
+		ASWJ_LMS_Settings::update(
+			array(
+				'catalog_page_id'      => isset( $ids['courses'] ) ? $ids['courses'] : 0,
+				'portal_page_id'       => isset( $ids['student-portal'] ) ? $ids['student-portal'] : 0,
+				'registration_page_id' => isset( $ids['register'] ) ? $ids['register'] : 0,
+				'login_page_id'        => isset( $ids['login'] ) ? $ids['login'] : 0,
+				'subscribe_page_id'    => isset( $ids['subscribe'] ) ? $ids['subscribe'] : 0,
+			)
+		);
+
+		return array(
+			'ids'     => $ids,
+			'created' => $created,
+		);
 	}
 
 	public static function menu() {
@@ -45,6 +123,29 @@ class ASWJ_LMS_Admin {
 			<?php if ( isset( $_GET['updated'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'aswj-lms' ); ?></p></div>
 			<?php endif; ?>
+			<?php if ( isset( $_GET['pages_created'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+				<div class="notice notice-success is-dismissible"><p>
+					<?php
+					printf(
+						/* translators: %d: number of pages created */
+						esc_html__( 'Site pages ready (%d newly created). Page settings below have been wired up automatically.', 'aswj-lms' ),
+						absint( $_GET['pages_created'] ) // phpcs:ignore WordPress.Security.NonceVerification
+					);
+					?>
+				</p></div>
+			<?php endif; ?>
+
+			<div class="card" style="max-width:760px;margin-bottom:16px">
+				<h2 style="margin-top:0"><?php esc_html_e( 'One-click site setup', 'aswj-lms' ); ?></h2>
+				<p><?php esc_html_e( 'Creates the standard pages — Home, Courses, Student Portal, Register, Login, Subscribe — each with its ready-made design, and links them into the settings below. Existing pages with the same slug are reused, never overwritten. Safe to run again at any time.', 'aswj-lms' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="aswj_create_pages" />
+					<?php wp_nonce_field( 'aswj_create_pages' ); ?>
+					<p><label><input type="checkbox" name="set_front_page" value="1" /> <?php esc_html_e( 'Also make the Home page my site front page', 'aswj-lms' ); ?></label></p>
+					<?php submit_button( __( 'Create Site Pages', 'aswj-lms' ), 'primary', 'submit', false ); ?>
+				</form>
+			</div>
+
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="aswj_save_settings" />
 				<?php wp_nonce_field( 'aswj_save_settings' ); ?>
@@ -68,6 +169,13 @@ class ASWJ_LMS_Admin {
 						<td>
 							<?php self::pages_dropdown( 'registration_page_id', (int) $s['registration_page_id'] ); ?>
 							<p class="description"><?php esc_html_e( 'The page containing your Fluent Forms registration form.', 'aswj-lms' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="login_page_id"><?php esc_html_e( 'Login page', 'aswj-lms' ); ?></label></th>
+						<td>
+							<?php self::pages_dropdown( 'login_page_id', (int) $s['login_page_id'] ); ?>
+							<p class="description"><?php esc_html_e( 'The page containing the [aswj_login] shortcode. Falls back to wp-login.php when unset.', 'aswj-lms' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -106,6 +214,13 @@ class ASWJ_LMS_Admin {
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="dob_field_name"><?php esc_html_e( 'Date of birth field name', 'aswj-lms' ); ?></label></th>
+						<td>
+							<input type="text" name="dob_field_name" id="dob_field_name" value="<?php echo esc_attr( $s['dob_field_name'] ); ?>" class="regular-text" />
+							<p class="description"><?php esc_html_e( 'Name attribute of the date-of-birth field on your forms (default: dob). The student\'s age is then calculated automatically and stays correct as they get older. If a form only has an "age" field, that still works too.', 'aswj-lms' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="youtube_api_key"><?php esc_html_e( 'YouTube Data API key', 'aswj-lms' ); ?></label></th>
 						<td>
 							<input type="text" name="youtube_api_key" id="youtube_api_key" value="<?php echo esc_attr( $s['youtube_api_key'] ); ?>" class="regular-text" autocomplete="off" />
@@ -131,6 +246,30 @@ class ASWJ_LMS_Admin {
 						<td>
 							<input type="email" name="contact_email" id="contact_email" value="<?php echo esc_attr( $s['contact_email'] ); ?>" class="regular-text" />
 						</td>
+					</tr>
+					<tr><th colspan="2"><h2 style="margin-bottom:0"><?php esc_html_e( 'Branding & Home Page', 'aswj-lms' ); ?></h2></th></tr>
+					<tr>
+						<th scope="row"><label for="logo_url"><?php esc_html_e( 'Logo image URL', 'aswj-lms' ); ?></label></th>
+						<td>
+							<input type="url" name="logo_url" id="logo_url" value="<?php echo esc_attr( $s['logo_url'] ); ?>" class="regular-text" placeholder="https://…/logo.png" />
+							<p class="description"><?php esc_html_e( 'Upload your logo in Media Library, copy its URL and paste it here — it appears in the home page hero. Leave blank to use the built-in blue/green mark.', 'aswj-lms' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="hero_title"><?php esc_html_e( 'Home hero title', 'aswj-lms' ); ?></label></th>
+						<td><input type="text" name="hero_title" id="hero_title" value="<?php echo esc_attr( $s['hero_title'] ); ?>" class="large-text" /></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="hero_subtitle"><?php esc_html_e( 'Home hero subtitle', 'aswj-lms' ); ?></label></th>
+						<td><textarea name="hero_subtitle" id="hero_subtitle" class="large-text" rows="2"><?php echo esc_textarea( $s['hero_subtitle'] ); ?></textarea></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="instagram_url"><?php esc_html_e( 'Instagram URL', 'aswj-lms' ); ?></label></th>
+						<td><input type="url" name="instagram_url" id="instagram_url" value="<?php echo esc_attr( $s['instagram_url'] ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="facebook_url"><?php esc_html_e( 'Facebook URL', 'aswj-lms' ); ?></label></th>
+						<td><input type="url" name="facebook_url" id="facebook_url" value="<?php echo esc_attr( $s['facebook_url'] ); ?>" class="regular-text" /></td>
 					</tr>
 				</table>
 				<?php submit_button( __( 'Save Settings', 'aswj-lms' ) ); ?>
@@ -167,7 +306,14 @@ class ASWJ_LMS_Admin {
 				'sister_field_value'    => isset( $_POST['sister_field_value'] ) ? sanitize_text_field( wp_unslash( $_POST['sister_field_value'] ) ) : 'female',
 				'phone_field_name'      => isset( $_POST['phone_field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['phone_field_name'] ) ) : 'phone',
 				'age_field_name'        => isset( $_POST['age_field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['age_field_name'] ) ) : 'age',
+				'dob_field_name'        => isset( $_POST['dob_field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['dob_field_name'] ) ) : 'dob',
+				'login_page_id'         => isset( $_POST['login_page_id'] ) ? absint( $_POST['login_page_id'] ) : 0,
 				'youtube_api_key'       => isset( $_POST['youtube_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['youtube_api_key'] ) ) : '',
+				'logo_url'              => isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '',
+				'hero_title'            => isset( $_POST['hero_title'] ) ? sanitize_text_field( wp_unslash( $_POST['hero_title'] ) ) : '',
+				'hero_subtitle'         => isset( $_POST['hero_subtitle'] ) ? sanitize_text_field( wp_unslash( $_POST['hero_subtitle'] ) ) : '',
+				'instagram_url'         => isset( $_POST['instagram_url'] ) ? esc_url_raw( wp_unslash( $_POST['instagram_url'] ) ) : '',
+				'facebook_url'          => isset( $_POST['facebook_url'] ) ? esc_url_raw( wp_unslash( $_POST['facebook_url'] ) ) : '',
 				'subscription_form_ids' => isset( $_POST['subscription_form_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['subscription_form_ids'] ) ) : '',
 				'subscribe_page_id'     => isset( $_POST['subscribe_page_id'] ) ? absint( $_POST['subscribe_page_id'] ) : 0,
 				'contact_email'         => isset( $_POST['contact_email'] ) ? sanitize_email( wp_unslash( $_POST['contact_email'] ) ) : '',
@@ -241,13 +387,19 @@ class ASWJ_LMS_Admin {
 					$enrolled   = ASWJ_LMS_Enrollment::get_user_course_ids( $user->ID );
 					$pending    = ASWJ_LMS_Enrollment::get_user_pending_course_ids( $user->ID );
 					$phone      = get_user_meta( $user->ID, 'aswj_phone', true );
+					$age        = ASWJ_LMS_Profile::get_age( $user->ID );
 					?>
 					<tr>
 						<td>
 							<strong><?php echo esc_html( $user->display_name ); ?></strong><br />
 							<span class="description"><?php echo esc_html( $user->user_email ); ?></span>
-							<?php if ( $phone ) : ?>
-								<br /><span class="description"><?php echo esc_html( $phone ); ?></span>
+							<?php if ( $phone || $age ) : ?>
+								<br /><span class="description">
+									<?php echo esc_html( $phone ); ?>
+									<?php if ( $age ) : ?>
+										<?php echo $phone ? ' · ' : ''; ?><?php printf( /* translators: %s: age */ esc_html__( 'Age %s', 'aswj-lms' ), esc_html( $age ) ); ?>
+									<?php endif; ?>
+								</span>
 							<?php endif; ?>
 						</td>
 						<td>
