@@ -35,7 +35,7 @@ const courses = [
     level: 'Essential',
     lessons: 24,
     progress: 64,
-    image: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&w=1200&q=85',
+    image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=1200&q=85',
     tone: 'green',
   },
   {
@@ -87,8 +87,6 @@ function Logo({ light = false }) {
 
 function Header() {
   const [open, setOpen] = useState(false)
-  const location = useLocation()
-  useEffect(() => setOpen(false), [location])
   const links = [['/', 'Home'], ['/courses', 'Courses'], ['/subscribe', 'Membership']]
 
   return (
@@ -98,9 +96,9 @@ function Header() {
         <div className="container nav-wrap">
           <Logo />
           <nav className={`main-nav ${open ? 'open' : ''}`} aria-label="Main navigation">
-            {links.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'}>{label}</NavLink>)}
-            <NavLink to="/login" className="mobile-only">Student login</NavLink>
-            <Link to="/register" className="button button-primary mobile-only">Start learning</Link>
+            {links.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'} onClick={() => setOpen(false)}>{label}</NavLink>)}
+            <NavLink to="/login" className="mobile-only" onClick={() => setOpen(false)}>Student login</NavLink>
+            <Link to="/register" className="button button-primary mobile-only" onClick={() => setOpen(false)}>Start learning</Link>
           </nav>
           <div className="nav-actions">
             <Link to="/login" className="text-link">Student login</Link>
