@@ -23,15 +23,16 @@ class ASWJ_LMS_Meta_Boxes {
 
 	public static function render_playlist_box( $post ) {
 		$playlist_id = get_post_meta( $post->ID, '_aswj_playlist_id', true );
-		$base_url    = wp_nonce_url(
-			add_query_arg(
-				array(
-					'action'    => 'aswj_import_playlist',
-					'course_id' => (int) $post->ID,
-				),
-				admin_url( 'admin-post.php' )
+		// Built with add_query_arg only — wp_nonce_url() HTML-escapes the
+		// ampersands (&#038;) which, used in window.location, truncates the
+		// query string at the # and loses the nonce ("link expired" error).
+		$base_url = add_query_arg(
+			array(
+				'action'    => 'aswj_import_playlist',
+				'course_id' => (int) $post->ID,
+				'_wpnonce'  => wp_create_nonce( 'aswj_import_playlist_' . $post->ID ),
 			),
-			'aswj_import_playlist_' . $post->ID
+			admin_url( 'admin-post.php' )
 		);
 		$lesson_count = count( ASWJ_LMS_Post_Types::get_course_lessons( $post->ID ) );
 		?>
@@ -192,7 +193,7 @@ class ASWJ_LMS_Meta_Boxes {
 		update_post_meta( $post_id, '_aswj_purchase_page_id', $purchase_page_id );
 	}
 
-	private static function create_enroll_page( $course_id ) {
+	public static function create_enroll_page( $course_id ) {
 		$course = get_post( $course_id );
 		$slug   = 'enroll-' . $course->post_name;
 

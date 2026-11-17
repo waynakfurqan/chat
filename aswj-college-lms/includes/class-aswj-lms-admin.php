@@ -56,18 +56,33 @@ class ASWJ_LMS_Admin {
 		$ids     = array();
 		$created = 0;
 		foreach ( $pages as $slug => $config ) {
-			$existing = get_page_by_path( $slug );
+			$shortcode = $config[1];
+
+			// Reuse an existing page only when it is actually ours (contains
+			// the shortcode). A site may already have e.g. /home or /login
+			// from its theme — leave those untouched and create our page at
+			// an "aswj-" slug instead (e.g. /aswj-home).
+			$target_slug = $slug;
+			$existing    = get_page_by_path( $target_slug );
+			if ( $existing && false === strpos( $existing->post_content, $shortcode ) ) {
+				$target_slug = 'aswj-' . $slug;
+				$existing    = get_page_by_path( $target_slug );
+				if ( $existing && false === strpos( $existing->post_content, $shortcode ) ) {
+					$existing = null; // Occupied too; let WP pick a unique slug below.
+				}
+			}
 			if ( $existing ) {
 				$ids[ $slug ] = (int) $existing->ID;
 				continue;
 			}
+
 			$page_id = wp_insert_post(
 				array(
 					'post_type'    => 'page',
 					'post_status'  => 'publish',
 					'post_title'   => $config[0],
-					'post_name'    => $slug,
-					'post_content' => $config[1],
+					'post_name'    => $target_slug,
+					'post_content' => $shortcode,
 				)
 			);
 			if ( $page_id && ! is_wp_error( $page_id ) ) {

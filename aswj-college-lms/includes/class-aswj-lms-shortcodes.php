@@ -100,9 +100,9 @@ class ASWJ_LMS_Shortcodes {
 		$user_id = get_current_user_id();
 
 		ob_start();
-		echo '<div class="aswj-lms aswj-course-grid">';
+		echo '<div class="aswj-lms aw"><div class="aw-course-grid">';
 		if ( ! $courses ) {
-			echo '<p class="aswj-muted">' . esc_html__( 'No courses available yet. Please check back soon, in shaa Allah.', 'aswj-lms' ) . '</p>';
+			echo '<p class="aw-muted">' . esc_html__( 'No courses available yet. Please check back soon, in shaa Allah.', 'aswj-lms' ) . '</p>';
 		}
 		foreach ( $courses as $course ) {
 			ASWJ_LMS_Templates::part(
@@ -113,7 +113,7 @@ class ASWJ_LMS_Shortcodes {
 				)
 			);
 		}
-		echo '</div>';
+		echo '</div></div>';
 		return ob_get_clean();
 	}
 

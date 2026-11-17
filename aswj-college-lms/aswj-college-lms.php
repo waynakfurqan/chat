@@ -34,6 +34,7 @@ require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-shortcodes.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-templates.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-fluentforms.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-meta-boxes.php';
+require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-course-editor.php';
 require_once ASWJ_LMS_DIR . 'includes/class-aswj-lms-admin.php';
 
 register_activation_hook( __FILE__, array( 'ASWJ_LMS_Install', 'activate' ) );
@@ -67,17 +68,42 @@ final class ASWJ_LMS {
 
 		if ( is_admin() ) {
 			ASWJ_LMS_Meta_Boxes::init();
+			ASWJ_LMS_Course_Editor::init();
 			ASWJ_LMS_Admin::init();
 		}
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_filter( 'body_class', array( $this, 'body_class' ) );
+	}
+
+	/**
+	 * Give LMS pages the warm-ivory ground from the design system.
+	 */
+	public function body_class( $classes ) {
+		if ( is_singular( array( 'aswj_course', 'aswj_lesson' ) ) || $this->page_has_lms_shortcode() ) {
+			$classes[] = 'aswj-ground';
+		}
+		return $classes;
 	}
 
 	public function enqueue_assets() {
+		/**
+		 * The three brand typefaces: Newsreader (serif headings),
+		 * Hanken Grotesk (sans body) and Amiri (Arabic). Filterable so the
+		 * kit's self-hosted woff2 files can replace Google Fonts later.
+		 */
+		$fonts_url = apply_filters(
+			'aswj_lms_fonts_url',
+			'https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Hanken+Grotesk:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap'
+		);
+		if ( $fonts_url ) {
+			wp_register_style( 'aswj-lms-fonts', $fonts_url, array(), ASWJ_LMS_VERSION );
+		}
+
 		wp_register_style(
 			'aswj-lms',
 			ASWJ_LMS_URL . 'assets/css/aswj-lms.css',
-			array(),
+			$fonts_url ? array( 'aswj-lms-fonts' ) : array(),
 			ASWJ_LMS_VERSION
 		);
 		wp_register_script(
