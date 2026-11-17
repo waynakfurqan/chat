@@ -272,7 +272,10 @@ class ASWJ_LMS_Admin {
 					</tr>
 					<tr>
 						<th scope="row"><label for="hero_title"><?php esc_html_e( 'Home hero title', 'aswj-lms' ); ?></label></th>
-						<td><input type="text" name="hero_title" id="hero_title" value="<?php echo esc_attr( $s['hero_title'] ); ?>" class="large-text" /></td>
+						<td>
+							<input type="text" name="hero_title" id="hero_title" value="<?php echo esc_attr( $s['hero_title'] ); ?>" class="large-text" />
+							<p class="description"><?php esc_html_e( 'Anything after a | is shown as the italic second clause, e.g. "Sacred knowledge,|taught with care."', 'aswj-lms' ); ?></p>
+						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="hero_subtitle"><?php esc_html_e( 'Home hero subtitle', 'aswj-lms' ); ?></label></th>

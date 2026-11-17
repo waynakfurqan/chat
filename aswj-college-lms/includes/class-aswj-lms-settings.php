@@ -29,8 +29,8 @@ class ASWJ_LMS_Settings {
 			'logo_url'               => '',
 			'instagram_url'          => 'https://www.instagram.com/aswjcollege',
 			'facebook_url'           => 'https://www.facebook.com/aswjcollegemelb',
-			'hero_title'             => __( 'Seek Authentic Islamic Knowledge', 'aswj-lms' ),
-			'hero_subtitle'          => __( 'Structured courses upon the Quran and the Sunnah with the understanding of the righteous predecessors — study online, at your own pace, wherever you are.', 'aswj-lms' ),
+			'hero_title'             => __( 'Sacred knowledge,|taught with care.', 'aswj-lms' ),
+			'hero_subtitle'          => __( 'Structured online courses in the Islamic sciences, taught upon the Quran and the Sunnah with the understanding of the righteous predecessors. Study at your own pace, wherever you are.', 'aswj-lms' ),
 		);
 	}
 

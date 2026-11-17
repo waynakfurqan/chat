@@ -35,9 +35,13 @@ automatically:
 | Login | `/login` | `[aswj_login]` styled login |
 | Subscribe | `/subscribe` | `[aswj_subscribe]` all-access pitch + subscription form |
 
-Existing pages with the same slugs are reused, never overwritten — safe to
-press again any time. Enrollment pages for paid courses are created
-automatically per course (see §4), so there is nothing to copy-paste.
+Existing pages with the same slugs are reused **only when they already
+contain the matching shortcode**. If your site already has, say, a `/home`
+or `/login` page of its own, it is left untouched and the plugin's page is
+created at `/aswj-home` (or `/aswj-login`) instead — move or rename it
+whenever you like. Safe to press again any time. Enrollment pages for paid
+courses are created automatically per course (see §4), so there is nothing
+to copy-paste.
 
 **Home page "Current Courses" section:** tick **Currently running** in any
 course's *Course Access* box and it appears on the home page instantly;
@@ -116,10 +120,27 @@ gender/sister or diploma status remain admin-only (Students screen).
 
 ## 4. Creating courses and lessons
 
-### Courses
+### Courses — the Course Editor (recommended)
 
-**ASWJ Courses → Add New Course.** Title, description (main editor), excerpt
-(short tagline), and featured image. In the **Course Access** box choose:
+**ASWJ Courses → Add New Course** opens the plugin's own course editor: one
+form with everything — title, page link, Arabic cover title, tagline,
+description, poster image (Media Library picker), access type, sisters-only,
+currently-running, price, payment form ID and the YouTube playlist link.
+Press **Create Course** and the plugin publishes the course page, imports
+every playlist video as a lesson, and creates the enrollment page if a
+payment form is set. Edit any course later via the bold **Course Editor**
+link under its title in the course list.
+
+Design note: when a course has no poster image, its card shows a typeset
+cover — the **Arabic title** in Amiri over a rotating set of brand
+colourways — in keeping with the design system. Fill in the Arabic title of
+the classical text for the nicest result.
+
+### Courses — the classic WordPress editor
+
+Still available (open a course → Edit). Title, description (main editor),
+excerpt (short tagline), and featured image. In the **Course Access** box
+choose:
 
 - **Access type**
   - *Free* — open to everyone; logged-out visitors can watch, logged-in
@@ -267,10 +288,20 @@ on YouTube for the on-site player to work.
 - **ASWJ Courses → Settings** — pages, registration form mapping, subscription
   forms, contact email.
 
-## 8. Theming
+## 8. Design & theming
 
-Templates live in `aswj-college-lms/templates/`. To customize without editing
-the plugin, copy `single-course.php` or `single-lesson.php` into an
-`aswj-lms/` folder inside your active theme and edit the copy. Colors are CSS
-variables at the top of `assets/css/aswj-lms.css` (blue/green on white, per
-ASWJ College branding).
+The front end implements the **aswj-design-kit**: warm ivory ground, ink
+navy, Newsreader serif headings (with the italic second clause), Hanken
+Grotesk body, Amiri for all Arabic, the mihrab arch and the eight-point-star
+lattice on navy bands, pill buttons, typeset Arabic course covers, and the
+blue→green brand gradient reserved for progress bars and the eyebrow bar.
+
+- **Fonts** load from Google Fonts by default. To self-host the kit's woff2
+  files instead, upload them and return your own stylesheet URL from the
+  `aswj_lms_fonts_url` filter (or return `''` and enqueue fonts yourself).
+- **Tokens** are CSS variables at the top of `assets/css/aswj-lms.css`
+  (`--aw-surface`, `--aw-ink`, `--aw-deep`, `--aw-brand-blue`, …). Change a
+  token once and every component follows.
+- Templates live in `aswj-college-lms/templates/`. To customize without
+  editing the plugin, copy `single-course.php` or `single-lesson.php` into an
+  `aswj-lms/` folder inside your active theme and edit the copy.

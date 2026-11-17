@@ -23,6 +23,25 @@
 		});
 	}
 
+	/* FAQ accordion: one item open at a time --------------------------------- */
+	document.querySelectorAll('[data-aswj-accordion]').forEach(function (acc) {
+		acc.querySelectorAll('.aw-acc__q').forEach(function (q) {
+			q.addEventListener('click', function () {
+				var item = q.closest('.aw-acc__item');
+				var wasOpen = item.classList.contains('is-open');
+				acc.querySelectorAll('.aw-acc__item.is-open').forEach(function (open) {
+					open.classList.remove('is-open');
+					var btn = open.querySelector('.aw-acc__q');
+					if (btn) { btn.setAttribute('aria-expanded', 'false'); }
+				});
+				if (!wasOpen) {
+					item.classList.add('is-open');
+					q.setAttribute('aria-expanded', 'true');
+				}
+			});
+		});
+	});
+
 	/* Deferred, access-checked video loading -------------------------------- */
 	document.querySelectorAll('[data-aswj-video-lesson]').forEach(function (frame) {
 		var lessonId = frame.getAttribute('data-aswj-video-lesson');
